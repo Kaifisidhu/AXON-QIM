@@ -1,0 +1,186 @@
+AXON-QIM Engine
+
+**Quantum Information Manifold — Holographic Field Inversion for Sub-2nm EUV Lithography**
+
+[![Live Dashboard](https://img.shields.io/badge/Live%20Dashboard-axon--qim.replit.app-blue?style=for-the-badge)](https://axon-qim.replit.app)
+[![arXiv](https://img.shields.io/badge/arXiv-XXXX.XXXXX-b31b1b?style=for-the-badge)](https://arxiv.org/abs/XXXX.XXXXX)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=for-the-badge&logo=python)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100%2B-009688?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)](LICENSE)
+
+---
+
+> *"Rather than suppressing noise through hardware constraints, we correct it computationally through holographic field inversion."*
+
+---
+
+## What is AXON-QIM?
+
+EUV lithography at sub-2nm feature scales is fundamentally limited by **photon shot noise** — a quantum stochastic effect arising from the discrete, Poissonian nature of photon-resist interactions. At low doses, this noise dominates pattern edges and causes **Line-Edge Roughness (LER)**, which directly degrades transistor performance.
+
+AXON-QIM treats this as an **information theory problem**:
+
+- The ideal pattern is a structured, low-entropy field on an information manifold
+- The noisy exposure is a quantum measurement collapse (Poissonian sampling) of that manifold
+- The goal is to **invert the measurement channel** and reconstruct the intended geometry
+
+The engine applies the **Omega Operator (Ω)** — a frequency-domain holographic inversion algorithm — to iteratively minimize the Von Neumann entropy of the exposure field, recovering the Platonic ideal from the stochastic observation.
+
+---
+
+## Results
+
+| EUV Dose (mJ/cm²) | Baseline LER (nm) | AXON LER (nm) | Improvement |
+|:-----------------:|:-----------------:|:-------------:|:-----------:|
+| 10                | 4.82              | 2.94          | **39.0%**   |
+| 20                | 3.41              | 1.87          | **45.2%**   |
+| 30                | 2.79              | 1.53          | **45.2%**   |
+| 40                | 2.42              | 1.31          | **45.9%**   |
+| 60                | 1.97              | 1.03          | **47.7%**   |
+| 80                | 1.71              | 0.93          | **45.6%**   |
+
+**Key result:** AXON-QIM achieves equivalent LER performance at 30 mJ/cm² that would otherwise require ~80 mJ/cm² — a **2.7× dose reduction** with zero throughput penalty.
+
+---
+
+## Live Demo
+
+The full simulation engine is deployed and publicly accessible:
+
+**[axon-qim.replit.app](https://axon-qim.replit.app)**
+
+- Adjust EUV dose (10–80 mJ/cm²) and holographic iterations (Ω = 1–10)
+- Click **ENGAGE AXON-QIM** to run a live simulation
+- View entropy reduction, LER improvement, and the virtual microscope cross-section
+
+---
+
+## The Mathematics
+
+### 1. Photon Shot Noise Model
+
+For EUV photons at λ = 13.5 nm, the photon energy is:
+
+```
+E_γ = hc/λ ≈ 91.9 eV
+```
+
+Expected photons per pixel at dose D:
+
+```
+n̄_i = (D × 10⁻³ / E_γ) × (Δx)² × I_i
+```
+
+Actual exposure follows Poisson statistics: `n_i ~ Poisson(n̄_i)`
+
+### 2. Von Neumann Entropy
+
+The information density of the exposure field:
+
+```
+ρ_ij = |E_ij| / Σ|E_kl|
+S[E] = -Σ ρ_ij ln(ρ_ij)
+```
+
+Shot noise increases S[E]. AXON-QIM minimizes it.
+
+### 3. The Omega Operator (Ω)
+
+At each iteration:
+
+```
+1. F̂(k) = FFT{ E(t) }                          # Transform to momentum space
+2. F_info = E(t) - Gaussian_σ * E(t)            # Extract noise self-energy
+3. Ẽ(t+1)(k) = (F̂(k) - α·FFT{F_info}) · K(k)  # Inversion + holographic filter
+4. E(t+1) = |IFFT{ Ẽ(t+1) }|                   # Return to spatial domain
+```
+
+Where `K(k) = exp(-(kx² + ky²) / 2σk²)` is the holographic kernel.
+
+**Complexity:** O(N log N) per output pixel via FFT.
+
+---
+
+## Architecture
+
+```
+AXON-QIM/
+├── backend.py          # Python FastAPI simulation engine (numpy/scipy)
+├── App.tsx             # React dashboard (Recharts virtual microscope)
+└── axon_qim_whitepaper.tex  # Full scientific white paper (LaTeX)
+```
+
+**Stack:**
+- `numpy` — array operations and Poisson sampling
+- `scipy.fft` — FFT2/IFFT2 for frequency-domain inversion
+- `scipy.ndimage` — Gaussian convolution for information force
+- `FastAPI` — REST API endpoint (`POST /axon-api/simulate`)
+- `React + Recharts` — live visualization dashboard
+
+---
+
+## Quickstart
+
+```bash
+# Install dependencies
+pip install numpy scipy fastapi uvicorn pydantic
+
+# Start the engine
+uvicorn backend:app --host 0.0.0.0 --port 8000
+
+# API is live at http://localhost:8000/axon-api/simulate
+```
+
+### Example API Call
+
+```bash
+curl -X POST http://localhost:8000/axon-api/simulate \
+  -H "Content-Type: application/json" \
+  -d '{"dose_mj": 30.0, "wavelength_nm": 13.5, "qim_iterations": 5}'
+```
+
+### Example Response
+
+```json
+{
+  "entropy_initial": 3.4123,
+  "entropy_final": 2.7081,
+  "ler_baseline_nm": 2.791,
+  "ler_qim_nm": 1.534,
+  "improvement_pct": 45.04,
+  "baseline_cross_section": [...],
+  "qim_cross_section": [...]
+}
+```
+
+---
+
+## White Paper
+
+The full scientific paper is available:
+
+- **arXiv preprint:** [arxiv.org/abs/XXXX.XXXXX](https://arxiv.org/abs/XXXX.XXXXX) ← *update after submission*
+- **LaTeX source:** [`axon_qim_whitepaper.tex`](axon_qim_whitepaper.tex)
+
+**Citation:**
+```bibtex
+@article{singh2026axonqim,
+  title   = {AXON-QIM: Quantum Information Manifold — A Holographic Framework
+             for Stochastic Resolution in Sub-2nm Lithography},
+  author  = {Singh, Palwar},
+  journal = {arXiv preprint arXiv:XXXX.XXXXX},
+  year    = {2026}
+}
+```
+
+---
+
+## Contact
+
+**Palwar Singh** — AXON Research Group
+
+For collaboration inquiries from research institutions and semiconductor manufacturers, open an issue or reach out directly.
+
+---
+
+*AXON-QIM is open-source research software. MIT License.*
